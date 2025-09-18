@@ -4,7 +4,7 @@ RUN dnf install -y git libcouchbase-devel php-devel php-pear gcc g++ make autoco
 
 WORKDIR /build
 
-RUN git clone --recurse-submodule --branch connections-count-reproducer https://github.com/avsej/php-couchbase .
+RUN git clone --branch connections-count-reproducer https://github.com/avsej/php-couchbase .
 
 RUN pecl package && pecl install ./couchbase-*.tgz
 
