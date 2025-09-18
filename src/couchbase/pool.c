@@ -147,13 +147,34 @@ static lcb_STATUS pcbc_establish_connection(lcb_INSTANCE_TYPE type, lcb_INSTANCE
     }
     lcb_createopts_destroy(options);
     lcb_set_cookie(conn, logger);
-    pcbc_log(LOGARGS(conn, INFO), "New lcb_INSTANCE * instance has been initialized");
-    err = lcb_cntl(conn, LCB_CNTL_SET, LCB_CNTL_CLIENT_STRING, pcbc_client_string);
-    if (err != LCB_SUCCESS) {
-        pcbc_log(LOGARGS(conn, ERROR), "Failed to configure LCB client string: %s", lcb_strerror_short(err));
-        lcb_destroy(conn);
-        lcb_logger_destroy(logger);
-        return err;
+    {
+#define CLIENT_STRING_MAX 250
+
+        char client_string[CLIENT_STRING_MAX] = {0};
+        int base_len = snprintf(client_string, CLIENT_STRING_MAX, "%s", pcbc_client_string);
+
+        const char *param_name = "client_string=";
+        const char *user_client_string = strstr(connstr, param_name);
+        if (user_client_string) {
+            user_client_string += strlen(param_name);
+            const char *end = strchr(user_client_string, '&');
+            size_t user_len = end ? (size_t)(end - user_client_string) : strlen(user_client_string);
+
+            if (base_len + 1 + user_len + 1 > CLIENT_STRING_MAX) { // 1 for ';', 1 for '\0'
+                user_len = CLIENT_STRING_MAX - base_len - 2;       // leave space
+            }
+            snprintf(client_string + base_len, CLIENT_STRING_MAX - base_len, ";%.*s", (int)user_len,
+                     user_client_string);
+        }
+
+        pcbc_log(LOGARGS(conn, INFO), "New lcb_INSTANCE * instance has been initialized");
+        err = lcb_cntl(conn, LCB_CNTL_SET, LCB_CNTL_CLIENT_STRING, client_string);
+        if (err != LCB_SUCCESS) {
+            pcbc_log(LOGARGS(conn, ERROR), "Failed to configure LCB client string: %s", lcb_strerror_short(err));
+            lcb_destroy(conn);
+            lcb_logger_destroy(logger);
+            return err;
+        }
     }
     if (enable_metrics) {
         lcb_cntl_string(conn, "enable_operation_metrics", "on");
