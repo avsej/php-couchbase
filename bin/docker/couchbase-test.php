@@ -58,7 +58,7 @@ $connection_string = addParameter($connection_string, "client_string", sprintf("
 $bucket_name = getRandomParameter("bucket", "default");
 $scope_name = getRandomParameter("scope", "_default");
 $collection_name = getParameter("collection", "_default");
-$key = getParameter("key", "foo");
+$key = getRandomParameter("key", "foo");
 printf("username: %s\n", $username);
 printf("password: %s\n", $password);
 printf("connection_string: %s\n", $connection_string);
